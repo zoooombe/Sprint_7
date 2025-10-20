@@ -1,0 +1,12 @@
+# created by virtualenv automatically
+__pycache__/
+*.pyc
+.env
+.venv
+venv/
+allure-results/
+allure-report/
+.pytest_cache/
+.coverage
+htmlcov/
+*.log
