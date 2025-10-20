@@ -1,38 +1,39 @@
 import pytest
-import requests
 from helpers.api_client import ScooterApiClient
-from utils.generators import generate_random_string, register_new_courier_and_return_login_password
-
-
-@pytest.fixture
-def api_client():
-    return ScooterApiClient()
+from utils.generators import generate_random_string
 
 
 @pytest.fixture
 def registered_courier():
-    courier_data = register_new_courier_and_return_login_password()
+    client = ScooterApiClient()
 
-    if not courier_data:
+    login = generate_random_string(10)
+    password = generate_random_string(10)
+    first_name = generate_random_string(10)
+
+    response = client.create_courier(login, password, first_name)
+
+    if response.status_code != 201:
         pytest.skip("Не удалось зарегистрировать курьера для теста")
 
-    login, password, first_name = courier_data
-
-    yield {
+    courier_data = {
         "login": login,
         "password": password,
         "first_name": first_name
     }
 
-    client = ScooterApiClient()
-    response = client.login_courier(login, password)
-    if response.status_code == 200:
-        courier_id = response.json()["id"]
+    yield courier_data
+
+    login_response = client.login_courier(login, password)
+    if login_response.status_code == 200:
+        courier_id = login_response.json()["id"]
         client.delete_courier(courier_id)
 
 
 @pytest.fixture
-def order_track(api_client):
+def order_track():
+    client = ScooterApiClient()
+
     order_data = {
         "firstName": "Тест",
         "lastName": "Тестов",
@@ -45,7 +46,7 @@ def order_track(api_client):
         "color": ["BLACK"]
     }
 
-    response = api_client.create_order(order_data)
+    response = client.create_order(order_data)
     assert response.status_code == 201
     track = response.json()["track"]
 
